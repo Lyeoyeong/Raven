@@ -1,0 +1,65 @@
+---
+title: "DESeq2_example"
+author: "Jin"
+date: '2022-06-16'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# BiocManager::install("DESeq2")
+# BiocManager::install("pasilla")
+```
+
+## Standard Workflow
+
+This is standard workflow following **DESeq2** tutorial.  
+Vignettes see: <https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html>.
+
+As input, DESeq2 expects un-normalized count data as obtained.  
+
+
+```{r, echo = FALSE}
+library(DESeq2)
+```
+
+## Construct a count matrix from single-cell data
+
+The object class used by DESeq2 package to store the read counts and the intermediate estimated quantities during statistial analysis is the DESeqDataSet.  
+A DESeqDataSet object must have an associated design formula. The design formula expresses the variables which will be used in modeling.  
+DESeqDataSet can be constructed from a count matrix.  
+
+```{r}
+library(pasilla)
+pasCts <- system.file("extdata",
+                      "pasilla_gene_counts.tsv",
+                      package="pasilla", mustWork=TRUE)
+pasAnno <- system.file("extdata",
+                       "pasilla_sample_annotation.csv",
+                       package="pasilla", mustWork=TRUE)
+cts <- as.matrix(read.csv(pasCts,sep="\t",row.names="gene_id"))
+coldata <- read.csv(pasAnno, row.names=1)
+coldata <- coldata[,c("condition","type")] # select metadata needed
+coldata$condition <- factor(coldata$condition) # make factor
+coldata$type <- factor(coldata$type) # make factor
+```
+
+Have a look at the cts and coldata:
+```{r}
+head(cts)
+head(coldata)
+```
+
+Columns in the count matrix and rows of the column data should in the same order. So we need to rearrange this.
+```{r}
+rownames(coldata) <- sub("fb", "", rownames(coldata))
+all(rownames(coldata) %in% colnames(cts))
+
+all(rownames(coldata) == colnames(cts))
+
+cts <- cts[, rownames(coldata)]
+all(rownames(coldata) == colnames(cts))
+```
+
+
